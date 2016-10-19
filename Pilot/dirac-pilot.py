@@ -24,6 +24,7 @@ import os
 import getopt
 import sys
 from types import ListType
+REST_URL = 'https://pclhcb192.cern.ch:9910'
 
 from pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
 
@@ -42,11 +43,17 @@ if __name__ == "__main__":
   pilotParams.pilotScriptName = os.path.basename( pilotParams.pilotScript )
   log.debug( 'PARAMETER [%s]' % ', '.join( map( str, pilotParams.optList ) ) )
 
-  log.info( "Executing commands: %s" % str( pilotParams.commands ) )
+  log.info( ' Getting commands from CS ' )
+  access_token = os.environ["OA_USER_TOKEN"]
+  pilotCommands = requests.get( REST_URL + '/config/Value',
+                               params = {'access_token':access_token,
+                               'ValuePath':'/Operations/LHCb-Production/Pilot/Commands/BOINC'}, verify = False )
+  log.info( "Executing commands: %s" % str( pilotCommands ) )
+
   if pilotParams.commandExtensions:
     log.info( "Requested command extensions: %s" % str( pilotParams.commandExtensions ) )
 
-  for commandName in pilotParams.commands:
+  for commandName in pilotCommands:
     command, module = getCommand( pilotParams, commandName, log )
     if command is not None:
       log.info( "Command %s instantiated from %s" % ( commandName, module ) )
